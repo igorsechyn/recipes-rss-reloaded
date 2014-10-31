@@ -18,6 +18,7 @@ package com.netflix.recipes.rss.jersey.resources;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.netflix.recipes.rss.Subscriptions;
+import com.netflix.recipes.rss.impl.SubscriptionsImpl;
 import com.netflix.recipes.rss.manager.RSSManager;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.BasicCounter;

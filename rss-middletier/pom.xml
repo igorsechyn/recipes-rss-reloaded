@@ -24,7 +24,7 @@
         <configuration>
 					<archive>
 						<manifest>
-							<mainClass>com.netflix.recipes.rss.server.MiddleTierServer</mainClass>
+							<mainClass>com.netflix.recipes.rss.server.AppRunner</mainClass>
 						</manifest>
 					</archive>
         
