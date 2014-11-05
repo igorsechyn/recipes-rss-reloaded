@@ -15,44 +15,36 @@
  */
 package com.netflix.recipes.rss.impl;
 
-import com.netflix.recipes.rss.RSS;
-import com.netflix.recipes.rss.RSSItem;
+import com.netflix.recipes.rss.SubscriptionURLs;
 
 import javax.xml.bind.annotation.*;
 import java.util.List;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.NONE)
-public class RSSImpl implements RSS{
+public class SubscriptionURLsImpl implements SubscriptionURLs {
 
-    private final String url;
-    private final String title;
-    private final List<RSSItem> items;
+    private String user;
+    private List<String> subscriptions;
     
-    public RSSImpl() {
-        this.url   = null;
-        this.title = null;
-        this.items = null;
+    public SubscriptionURLsImpl() {
+        this.user = null;
+        this.subscriptions = null;
     }
     
-    public RSSImpl(String url, String title, List<RSSItem> items) {
-        this.url   = url;
-        this.title = title;
-        this.items = items;
+    public SubscriptionURLsImpl(String user, List<String> subscriptions) {
+        this.user = user;
+        this.subscriptions = subscriptions;
+    }
+    
+    @XmlElement(name="user")
+    public String getUser() {
+        return user;
     }
 
-    @XmlElement(name="url")
-    public String getUrl() {
-        return url;
+    @XmlElements({@XmlElement(name="subscriptionURLs", type=String.class)})
+    public List<String> getSubscriptionURLs() {
+        return subscriptions;
     }
-    
-    @XmlElement(name="title")
-    public String getTitle() {
-        return title;
-    }
-    
-    @XmlElements({@XmlElement(name="items", type=RSSItemImpl.class)})
-    public List<RSSItem> getItems() {
-        return items;
-    }
+
 }

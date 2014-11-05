@@ -18,25 +18,21 @@ package com.netflix.recipes.rss;
 import java.util.List;
 
 /**
- * Represents a RSS feed
+ * Represents a User and a list of subscribed feeds
  * 
  * @author ppadmanabhan
  *
  */
-public interface RSS {
+public interface SubscriptionURLs {
 
     /**
-     * RSS Feed url
+     * UUID of the user
      */
-    String getUrl();
-
-    /**
-     * Return the title of the RSS feed
-     */
-    String getTitle();
+    String getUser();
     
     /**
-     * Returns the list of items of the RSS feed
+     * List of the subscribed RSS URLs along with its contents 
      */
-    List<RSSItem> getItems();
+    List<String> getSubscriptionURLs();
+    
 }
