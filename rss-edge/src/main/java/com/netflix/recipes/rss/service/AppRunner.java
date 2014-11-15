@@ -22,38 +22,37 @@ import com.netflix.ribbon.proxy.ProxyLifeCycle;
 
 public class AppRunner {
 
-	static Logger log = LoggerFactory.getLogger(AppRunner.class);
+	private static final Logger log = LoggerFactory.getLogger(AppRunner.class);
 	
 	public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException {
     ConfigurationManager.getConfigInstance().setProperty("RssService.ribbon." + CommonClientConfigKey.MaxAutoRetriesNextServer, "3");
     ConfigurationManager.getConfigInstance().setProperty("RssService.ribbon." + CommonClientConfigKey.ListOfServers, "localhost:" + 8888);
-    log.info("lskdjfsdf");
     final RssService rssService = Ribbon.from(RssService.class);
     triggerSubscriptions(rssService);
 
     rssService.rssByUserId("igor").toObservable().flatMap(subscriptionURLs -> {
 			Gson gson = new Gson();
-			log.info("dsfsf");
 			JsonArray subscritions = gson.fromJson(subscriptionURLs.toString(Charset.defaultCharset()), JsonArray.class);
 			return Observable.from(subscritions);
 		}).flatMap(urlElement -> {
 			String url = urlElement.getAsString();
-			Observable<ByteBuf> contentObservable = RxNetty.createHttpGet(url).flatMap(response -> {
-				return response.getContent();
+			Observable<ByteBuf> contentObservable = RxNetty.createHttpGet(url).onErrorReturn(e -> {
+				log.error("Error fetching URL: " + url, e);
+				return null;
+			}).flatMap(response -> {
+				if (response != null) {
+					return response.getContent();					
+				} else {
+					return Observable.empty();
+				}
 			});
 			return contentObservable;
-		}).onErrorReturn(t1 -> {
-			log.error("", t1);
-			return null;
 		}).subscribe(content -> {
 			log.info("next");
-			if (content != null) {
-				System.out.println(content.toString(Charset.defaultCharset()));				
-			}
+			log.info(content.toString(Charset.defaultCharset()));				
 		},
 		e -> {
-			log.info("No connection");
-			log.error("Error", e);
+			log.error("Error on subscription:", e);
 		},
 		() -> {
 			log.info("complete");
@@ -64,6 +63,7 @@ public class AppRunner {
 
 	private static void triggerSubscriptions(RssService rssService) {
 		rssService.subscribe("igor", "http://rss.cnn.com/rss/edition.rss").toObservable().materialize().toBlocking().last();
+		rssService.subscribe("igor", "http://rss.bbc.com/rss/edition.rss").toObservable().materialize().toBlocking().last();
 		rssService.subscribe("igor", "http://feeds.washingtonpost.com/rss/politics").toObservable().materialize().toBlocking().last();
 	}
 	
