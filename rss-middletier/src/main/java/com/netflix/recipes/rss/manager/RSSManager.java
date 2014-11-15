@@ -23,60 +23,57 @@ import com.netflix.governator.annotations.Configuration;
 import com.netflix.karyon.health.HealthCheckHandler;
 import com.netflix.recipes.rss.RSSConstants;
 import com.netflix.recipes.rss.RSSStore;
-import com.netflix.recipes.rss.SubscriptionURLs;
 import com.netflix.recipes.rss.impl.CassandraStoreImpl;
 import com.netflix.recipes.rss.impl.InMemoryStoreImpl;
-import com.netflix.recipes.rss.impl.SubscriptionURLsImpl;
 
 /**
- * RSS Manager that
- *  1) Fetches content from RSS feeds using Ribbon
- *  2) Parses RSS feeds
- *  3) Persists feed urls into
- *      a) Cassandra using Astyanax (or)
- *      b) InMemoryStore
+ * RSS Manager that 1) Fetches content from RSS feeds using Ribbon 2) Parses RSS
+ * feeds 3) Persists feed urls into a) Cassandra using Astyanax (or) b)
+ * InMemoryStore
  */
 @AutoBindSingleton
 public class RSSManager implements HealthCheckHandler {
-	@Configuration(value="rss.store")
-    private String storeType = RSSConstants.RSS_STORE_CASSANDRA;
+	@Configuration(value = "rss.store")
+	private String storeType = RSSConstants.RSS_STORE_CASSANDRA;
 
-    private RSSStore store;
-    
-    public RSSManager() {
-        if (RSSConstants.RSS_STORE_CASSANDRA.equals(
-                DynamicPropertyFactory.getInstance().getStringProperty(RSSConstants.RSS_STORE, RSSConstants.RSS_STORE_CASSANDRA).get())) {
-            store = new CassandraStoreImpl();
-        } else {
-            store = new InMemoryStoreImpl();
-        }
-    }
+	private RSSStore store;
 
-    /**
-     * Fetches the User subscriptions urls
-     */
-    public SubscriptionURLs getSubscriptions(String userId) throws Exception {
-        List<String> feedUrls = store.getSubscribedUrls(userId);
-        return new SubscriptionURLsImpl(userId, feedUrls);
-    }
+	public RSSManager() {
+		if (RSSConstants.RSS_STORE_CASSANDRA.equals(DynamicPropertyFactory
+		    .getInstance()
+		    .getStringProperty(RSSConstants.RSS_STORE,
+		        RSSConstants.RSS_STORE_CASSANDRA).get())) {
+			store = new CassandraStoreImpl();
+		} else {
+			store = new InMemoryStoreImpl();
+		}
+	}
 
-    /**
-     * Add subscription
-     */
-    public void addSubscription(String user, String decodedUrl) throws Exception {
-        if (decodedUrl == null) throw new IllegalArgumentException("url cannot be null");
-        store.subscribeUrl(user, decodedUrl);
-    }
+	/**
+	 * Fetches the User subscriptions urls
+	 */
+	public List<String> getSubscriptions(String userId) throws Exception {
+		List<String> feedUrls = store.getSubscribedUrls(userId);
+		return feedUrls;
+	}
 
-    /**
-     * Delete subscription
-     */
-    public void deleteSubscription(String user, String decodedUrl) throws Exception {
-        if (decodedUrl == null) throw new IllegalArgumentException("url cannot be null");
-        store.unsubscribeUrl(user, decodedUrl);
-    }
+	/**
+	 * Add subscription
+	 */
+	public void addSubscription(String user, String decodedUrl) throws Exception {
+		if (decodedUrl == null) throw new IllegalArgumentException("url cannot be null");
+		store.subscribeUrl(user, decodedUrl);
+	}
 
-    public int getStatus() {
-        return store == null ? 500 : 200;
-    }
+	/**
+	 * Delete subscription
+	 */
+	public void deleteSubscription(String user, String decodedUrl) throws Exception {
+		if (decodedUrl == null)	throw new IllegalArgumentException("url cannot be null");
+		store.unsubscribeUrl(user, decodedUrl);
+	}
+
+	public int getStatus() {
+		return store == null ? 500 : 200;
+	}
 }
