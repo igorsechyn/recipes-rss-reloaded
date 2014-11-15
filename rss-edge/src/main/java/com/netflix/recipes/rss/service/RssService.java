@@ -11,8 +11,8 @@ import com.netflix.ribbon.proxy.annotation.TemplateName;
 import com.netflix.ribbon.proxy.annotation.Var;
 
 @ClientProperties(properties = {
-		@ClientProperties.Property(name="ReadTimeout", value="2000"),
-		@ClientProperties.Property(name="ConnectTimeout", value="1000"),
+		@ClientProperties.Property(name="ReadTimeout", value="7000"),
+		@ClientProperties.Property(name="ConnectTimeout", value="7000"),
 		@ClientProperties.Property(name="MaxAutoRetriesNextServer", value="2")
 }, exportToArchaius = true)
 public interface RssService {
