@@ -35,32 +35,20 @@ public class RssRouter implements RequestHandler<ByteBuf, ByteBuf> {
 		 */
 		delegate.addUriRegex(".middletier.rss.user.*$", (request, response) -> {
 			log.info("Request Started: " + Thread.currentThread().getName());
+			String user = StringUtils.substringAfterLast(request.getPath(), "/");
+			
 			if (request.getHttpMethod() == HttpMethod.GET) {
-				String user = StringUtils.substringAfterLast(request.getPath(), "/");
-					/*
-					 * this is assumed to be a long lasting I/O. If it is not subscribed on the Schedulers.io(), it will block
-					 * the only thread of the server the time of the IO operation.  
-					 */
-					Observable<List<String>> subscriptions = rssManager.getSubscriptions(user); 
-					log.info("Request Done: " + Thread.currentThread().getName());
-
-					return Observable.<Void>create((OnSubscribe<Void>) subscriber -> {
-						subscriptions.subscribe(urls -> {
-							log.info("Request Writing response: " + Thread.currentThread().getName());
-							Gson gson = new Gson();
-							response.writeStringAndFlush(gson.toJson(urls));
-						}, Throwable::printStackTrace, () -> {
-							response.close(true);
-							subscriber.onCompleted();
-						});						
-					});
-					
+				return getSubscriptions(user, rssManager, response);
+			} else if (request.getHttpMethod() == HttpMethod.POST) {
+				String url = request.getQueryParameters().get("url").get(0);
+				return addSubscription(user, url, rssManager, response);
 			}
+			
 			return Observable.empty();
 		});
 		
 		/*
-		 * A very fast delegate to test if the server can server other requests, while busy with heavy IO request 
+		 * A fast delegate to test if the server can serve other requests, while busy with heavy IO request 
 		 */
 		delegate.addUriRegex(".middletier.rss.hello.*$", (request, response) -> {
 			return Observable.<Void>create((OnSubscribe<Void>) subscriber -> {
@@ -69,6 +57,37 @@ public class RssRouter implements RequestHandler<ByteBuf, ByteBuf> {
 			});
 
 		});
+	}
+	
+	private Observable<Void> addSubscription(String user,
+      String url, RSSManager rssManager, HttpServerResponse<ByteBuf> response) {
+		try {
+	    return rssManager.addSubscription(user, url);
+    } catch (Exception e) {
+    	log.error("Error adding url subscription for {}", user, e);
+    }
+		return Observable.empty();
+  }
+
+	private Observable<Void> getSubscriptions(String user, RSSManager rssManager, HttpServerResponse<ByteBuf> response) {
+		/*
+		 * this is assumed to be a long lasting I/O. If it is not subscribed on the Schedulers.io(), it will block
+		 * the only thread of the server for the time of the IO operation.  
+		 */
+		Observable<List<String>> subscriptions = rssManager.getSubscriptions(user); 
+		log.info("Request Done: " + Thread.currentThread().getName());
+
+		return Observable.<Void>create((OnSubscribe<Void>) subscriber -> {
+			subscriptions.subscribe(urls -> {
+				log.info("Request Writing response: " + Thread.currentThread().getName());
+				Gson gson = new Gson();
+				response.writeStringAndFlush(gson.toJson(urls));
+			}, Throwable::printStackTrace, () -> {
+				response.close(true);
+				subscriber.onCompleted();
+			});						
+		});
+		
 	}
 
 	@Override
